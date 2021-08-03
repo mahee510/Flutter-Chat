@@ -1,0 +1,35 @@
+name: flutterchat
+description: Chat App Task for digital orbis creators.
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cloud_firestore: ^2.4.0
+  cupertino_icons: ^1.0.2
+  firebase_auth: ^3.0.1
+  firebase_core: ^1.4.0
+  firebase_messaging: ^10.0.4
+  flutter_svg: ^0.22.0
+  google_sign_in: ^5.0.5
+  http: ^0.13.3
+  provider: ^5.0.0
+  random_string: ^2.3.1
+  shared_preferences: ^2.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/
