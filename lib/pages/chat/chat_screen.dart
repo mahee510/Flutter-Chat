@@ -98,6 +98,9 @@ class _ChatScreenState extends State<ChatScreen> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           padding: const EdgeInsets.all(16),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.92,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(24),
@@ -179,7 +182,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         onPressed: () {
                           setState(() {
                             addMessage(true);
-                            FocusScope.of(context).unfocus();
+                            // FocusScope.of(context).unfocus();
                           });
                         },
                         icon: Icon(Icons.send),
