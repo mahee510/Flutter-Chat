@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutterchat/controller/database.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -22,6 +23,7 @@ class Auth with ChangeNotifier {
 
   loginWithGoogle() async {
     try {
+      String? fcmToken;
       final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
       final GoogleSignIn _googleSignIn = GoogleSignIn();
 
@@ -35,7 +37,13 @@ class Auth with ChangeNotifier {
         idToken: googleSignInAuthentication.idToken,
         accessToken: googleSignInAuthentication.accessToken,
       );
+      final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
+      firebaseMessaging.getToken().then((token) {
+        fcmToken = token;
+      }).catchError((err) {
+        print("fcm toekn $err");
+      });
       UserCredential? response =
           await _firebaseAuth.signInWithCredential(credential);
 
@@ -44,15 +52,16 @@ class Auth with ChangeNotifier {
         DataBaseManger().addUserFormDB(user.uid, {
           'userId': user.uid,
           "userName": user.displayName,
-          "name": user.email!.replaceAll("@gmail.com", ""),
+          "name": user.email!.split("@")[0],
           "email": user.email,
-          "imagUrl": user.photoURL
+          "imagUrl": user.photoURL,
+          "fcmToken": fcmToken,
         }).then((value) {
           userId = user.uid;
           userName = user.displayName;
           userEmail = user.email;
           userImage = user.photoURL;
-          name = user.email!.replaceAll("@gmail.com", "");
+          name = user.email!.split("@")[0];
         });
       }
 
@@ -65,7 +74,8 @@ class Auth with ChangeNotifier {
             "userName": user.displayName,
             "email": user.email,
             "image": user.photoURL,
-            "name": user.email!.replaceAll("@gmail.com", ""),
+            "name": user.email!.split("@")[0],
+            "fcmToken": fcmToken,
           },
         );
         prefs.setString('userData', userData);

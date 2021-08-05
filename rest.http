@@ -1,0 +1,31 @@
+POST https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send HTTP/1.1
+
+Content-Type: application/json
+Authorization: cVOxqCEJQOyCHvRGwEOLHD:APA91bE9SaVB_Cr12ZTKUXSfVG-XR8vXCIp4IvkngNeCVxL_IlvEgxI4byP_4ISMZPgG_BiPBN7r4OCXm9a-tlhRZOBBRy_8yOgrccKGlmz_wUwaK4Vmyj785c58jP8Td3Cb2OGJUfkZ
+
+{
+   "message":{
+      "token":"cVOxqCEJQOyCHvRGwEOLHD:APA91bE9SaVB_Cr12ZTKUXSfVG-XR8vXCIp4IvkngNeCVxL_IlvEgxI4byP_4ISMZPgG_BiPBN7r4OCXm9a-tlhRZOBBRy_8yOgrccKGlmz_wUwaK4Vmyj785c58jP8Td3Cb2OGJUfkZ",
+      "notification":{
+        "body":"This is an FCM notification message!",
+        "title":"FCM Message"
+      }
+   }
+}
+
+#### d
+POST https://fcm.googleapis.com/fcm/send HTTP/1.1
+
+Content-Type: application/json
+Authorization: key=AIzaSyDj--eXoA-rMhxR6d0ZEx3x5Rr8ckmGx4E
+
+{
+   "message":{
+      "token":"cVOxqCEJQOyCHvRGwEOLHD:APA91bE9SaVB_Cr12ZTKUXSfVG-XR8vXCIp4IvkngNeCVxL_IlvEgxI4byP_4ISMZPgG_BiPBN7r4OCXm9a-tlhRZOBBRy_8yOgrccKGlmz_wUwaK4Vmyj785c58jP8Td3Cb2OGJUfkZ",
+      "data":{},
+      "notification":{
+        "title":"FCM Message",
+        "body":"This is an FCM notification message!",
+      }
+   }
+}

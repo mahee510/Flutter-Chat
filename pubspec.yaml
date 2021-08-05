@@ -16,9 +16,11 @@ dependencies:
   firebase_auth: ^3.0.1
   firebase_core: ^1.4.0
   firebase_messaging: ^10.0.4
+  flutter_local_notifications: ^8.0.0
   flutter_svg: ^0.22.0
   google_sign_in: ^5.0.5
   http: ^0.13.3
+  intl: ^0.17.0
   provider: ^5.0.0
   random_string: ^2.3.1
   shared_preferences: ^2.0.6

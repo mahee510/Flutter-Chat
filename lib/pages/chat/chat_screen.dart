@@ -1,12 +1,17 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:flutterchat/controller/database.dart';
 import 'package:flutterchat/provider/auth_provider.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:random_string/random_string.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
   ChatScreen({Key? key}) : super(key: key);
@@ -61,6 +66,7 @@ class _ChatScreenState extends State<ChatScreen> {
         "sendBy": userData['name'],
         "time": msgTime,
         "image": userData['image'],
+        "name": userData['userName'],
       };
 
       if (messageId == '') {
@@ -71,6 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
       DataBaseManger()
           .sendMessage(chatRoomId, messageId, messageInfo)
           .then((value) {
+        sendPushMessage(message);
         Map<String, dynamic> lastMessageInfo = {
           "message": message,
           "lasteMessageTime": msgTime,
@@ -90,7 +97,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {});
   }
 
-  Widget chatBubble(message, bool sendByMe) {
+  Widget chatBubble(name, message, bool sendByMe) {
     return Row(
       mainAxisAlignment:
           sendByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -118,7 +125,26 @@ class _ChatScreenState extends State<ChatScreen> {
               stops: [0.0, 1.0],
             ),
           ),
-          child: Text(message),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FittedBox(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 3,
+              ),
+              Text(
+                message ?? '',
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -129,21 +155,100 @@ class _ChatScreenState extends State<ChatScreen> {
       stream: messageStream,
       builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
         return snapshot.hasData
-            ? ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80),
-                itemCount: snapshot.data!.docs.length,
-                reverse: true,
-                itemBuilder: (context, index) {
-                  DocumentSnapshot data = snapshot.data!.docs[index];
-                  return chatBubble(
-                      data['message'], userData['name'] == data['sendBy']);
-                },
-              )
+            ? snapshot.data!.docs.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/chat.svg',
+                          height: 280,
+                          width: double.infinity,
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          "Start your conversation here...",
+                          style: Theme.of(context).textTheme.headline6,
+                        )
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    itemCount: snapshot.data!.docs.length,
+                    reverse: true,
+                    itemBuilder: (context, index) {
+                      DocumentSnapshot data = snapshot.data!.docs[index];
+                      return Column(
+                        crossAxisAlignment: userData['name'] == data['sendBy']
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          chatBubble(data['name'], data['message'],
+                              userData['name'] == data['sendBy']),
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            child: Text(
+                              DateFormat('h:mm a')
+                                  .format(DateTime.parse(
+                                      data['time'].toDate().toString()))
+                                  .toString(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  )
             : Center(
                 child: CircularProgressIndicator(),
               );
       },
     );
+  }
+
+  Future<void> sendPushMessage(String message) async {
+    QuerySnapshot ref =
+        await FirebaseFirestore.instance.collection('users').get();
+
+    try {
+      ref.docs.forEach((snapshot) async {
+        var data = snapshot.data() as Map;
+        if (userData['fcmToken'] != data['fcmToken']) {
+          http.Response response = await http.post(
+            Uri.parse('https://fcm.googleapis.com/fcm/send'),
+            headers: <String, String>{
+              'Content-Type': 'application/json',
+              'Authorization':
+                  'key=AAAA6xYgVGs:APA91bFwU8sjI-1eqadGArgYjD6aMzQaRBDlCguunRUsexgzAbkYSLuKF2q15FuClPtxPyIxDWdIXstQnfocf1I-EPkD6JictvW_ftqPb-kzHK3OhaQw4YKt3S_fVIn50V_VDpNNXdFK'
+            },
+            body: jsonEncode(
+              <String, dynamic>{
+                'notification': <String, dynamic>{
+                  'body': message,
+                  'title': userData['userName']
+                },
+                'priority': 'high',
+                'data': <String, dynamic>{
+                  'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                  'id': '1',
+                  'status': 'done'
+                },
+                'to': data['fcmToken'],
+              },
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      print("error push notification");
+    }
   }
 
   @override
@@ -168,7 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
               alignment: Alignment.bottomCenter,
               child: Container(
                 padding: const EdgeInsets.only(left: 10),
-                color: Colors.white24,
+                color: Theme.of(context).backgroundColor,
                 child: TextField(
                   // onChanged: (value) => addMessage(false),
                   controller: messageController,
@@ -185,7 +290,10 @@ class _ChatScreenState extends State<ChatScreen> {
                             // FocusScope.of(context).unfocus();
                           });
                         },
-                        icon: Icon(Icons.send),
+                        icon: Icon(
+                          Icons.send,
+                          color: Theme.of(context).accentColor,
+                        ),
                       ),
                     ),
                   ),
